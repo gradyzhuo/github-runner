@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Base tools commonly needed by workflows, plus gosu for privilege drop.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates curl wget gnupg lsb-release \
-        git jq unzip zip tar xz-utils \
+        git jq unzip zip tar xz-utils iproute2 \
         sudo gosu openssh-client rsync \
         build-essential python3 python3-pip \
     && rm -rf /var/lib/apt/lists/*

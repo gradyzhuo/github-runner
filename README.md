@@ -63,6 +63,21 @@ Build cache and images are shared with the host, and no privileged container is 
 Any job on this runner can therefore control the host's Docker, which is
 effectively host-level access. Only attach runners configured this way to repositories you trust.
 
+### Reaching containers started by jobs
+
+Containers a job starts are siblings of the runner, not children. A port published with
+`docker run -p 127.0.0.1:5432:5432` lands on the **host's** loopback, which the runner
+container cannot see through its own `127.0.0.1`. If your workflows start services this way
+and connect to `localhost`, run the runner with host networking:
+
+```sh
+docker run -d --network host ... ghcr.io/gradyzhuo/github-runner:latest
+```
+
+With `--network host` the runner sees the host's network exactly like a bare-metal runner,
+and tools such as `ss` report the host's real port usage. The bundled `docker-compose.yml`
+already sets `network_mode: host`.
+
 ```yaml
 jobs:
   build:
@@ -71,6 +86,19 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -t my-image .
 ```
+
+## Extending the image
+
+Keep this image generic and layer team-specific toolchains on top:
+
+```dockerfile
+FROM ghcr.io/gradyzhuo/github-runner:latest
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs && rm -rf /var/lib/apt/lists/*
+USER runner
+```
+
+Pin a tag (e.g. `:sha-xxxxxxx` or a release tag) in downstream images rather than `latest`.
 
 ## Build the image yourself
 
